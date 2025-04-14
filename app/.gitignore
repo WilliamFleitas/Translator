@@ -1,6 +1,7 @@
 node_modules
 dist
 out
+uv.lock
 electron-builder-cache/
 .DS_Store
 *.log*

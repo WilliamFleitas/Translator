@@ -81,18 +81,21 @@ const SelectMenu = ({
         onMenuChange={(open) => setIsOpen(open.open)}
         menuButton={
           <MenuButton disabled={disableButton}>
-            <small title={customButtonTitle} className={customButtonClassName}>
-              {customIcon ? customIcon : customButtonContent}
+            <div title={customButtonTitle} className={customButtonClassName}>
+              <strong className="truncate max-w-[5rem] md:max-w-fit  text-lg font-bold">
+                {customIcon ? customIcon : customButtonContent}
+              </strong>
+
               {enableArrow ? (
                 <IoIosArrowDown
-                  className={`w-5 h-5 min-w-5 min-h-5 transform transition-transform ${
+                  className={`w-5 h-5 min-w-5 min-h-5 max-w-5 max-h-5 transform transition-transform ${
                     isOpen ? 'rotate-180' : 'rotate-0'
                   }`}
                 />
               ) : (
                 <></>
               )}
-            </small>
+            </div>
           </MenuButton>
         }
       >

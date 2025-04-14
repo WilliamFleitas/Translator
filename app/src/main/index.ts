@@ -31,11 +31,11 @@ const venvPython = isPackaged
   ? path.join(
       app.getPath('userData').replace('Roaming', 'Local\\Programs'),
       'resources',
-      'venv',
+      '.venv',
       'Scripts',
       'python.exe'
     )
-  : path.resolve(__dirname, '../../venv/Scripts/python')
+  : path.resolve(__dirname, '../../.venv/Scripts/python')
 
 function createTray(): void {
   const trayIcon = app.isPackaged

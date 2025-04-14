@@ -232,7 +232,7 @@ const TranslatorController = ({
             handleOptionChange={handleSelectedTranscriptionLanguageChange}
             enableArrow={true}
             customButtonClassName={
-              'bg-primary-button hover:bg-primary-button-hover flex flex-row text-start items-center justify-between w-fit h-fit py-2 px-3 rounded-full text-lg font-bold text-white gap-3 uppercase'
+              'bg-primary-button hover:bg-primary-button-hover flex flex-row text-start items-center justify-between w-fit h-fit py-2 px-3 rounded-full text-white gap-3 uppercase'
             }
             customButtonContent={selectedTranscriptionLanguage.value.toString()}
             customButtonTitle={`Select Language`}
