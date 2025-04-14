@@ -1,6 +1,5 @@
 import { Routes, Route, HashRouter, useLocation } from 'react-router-dom'
 import TranslatorPage from './pages/translator/TranslatorPage'
-import { VCContext } from './components/context/VCContext'
 import { AzureSettingsContext } from './components/context/AzureSettingsContext'
 import TranslationOverlay from './pages/translationOverlay/TranslationOverlay'
 import { useEffect } from 'react'
@@ -24,25 +23,21 @@ const MainRoutes: React.FC = () => {
       <Route
         path="/*"
         element={
-          <VCContext>
-            <AzureSettingsContext>
-              <DeepgramSettingsContext>
-                <TranslatorPage />
-              </DeepgramSettingsContext>
-            </AzureSettingsContext>
-          </VCContext>
+          <AzureSettingsContext>
+            <DeepgramSettingsContext>
+              <TranslatorPage />
+            </DeepgramSettingsContext>
+          </AzureSettingsContext>
         }
       />
       <Route
         path="translator"
         element={
-          <VCContext>
-            <AzureSettingsContext>
-              <DeepgramSettingsContext>
-                <TranslatorPage />
-              </DeepgramSettingsContext>
-            </AzureSettingsContext>
-          </VCContext>
+          <AzureSettingsContext>
+            <DeepgramSettingsContext>
+              <TranslatorPage />
+            </DeepgramSettingsContext>
+          </AzureSettingsContext>
         }
       />
       <Route path="translationOverlay" element={<TranslationOverlay />} />

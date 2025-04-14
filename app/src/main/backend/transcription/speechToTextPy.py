@@ -1,5 +1,5 @@
 import os
-import pyaudio
+import pyaudiowpatch as pyaudio
 import sys
 import time
 import json
@@ -33,7 +33,7 @@ def capture_audio(audio_queue, stream, duration, start_time, capture_done_event)
             break
     capture_done_event.set()
 
-def process_transcriptions(audio_queue, deepgram_key, capture_done_event, audio_language):
+def process_transcriptions(audio_queue, deepgram_key, capture_done_event, audio_language, channels, rate):
     async def send_audio():
         try:
             deepgram = DeepgramClient(deepgram_key)
@@ -62,8 +62,8 @@ def process_transcriptions(audio_queue, deepgram_key, capture_done_event, audio_
             options_kwargs = dict(
                                 model="nova-2-general",
                                 encoding="linear16",
-                                sample_rate=RATE,
-                                channels=CHANNELS,
+                                sample_rate=rate,
+                                channels=channels,
                                 interim_results=True,
                                 )
             if audio_language != "detect_language":
@@ -96,12 +96,15 @@ def recognize_stream(source_type, durationTime, deepgram_key, audio_language):
         stream = None
 
         device_index = None
+        default_loopback = None
         if source_type == "speaker":
-            for i in range(audio.get_device_count()):
-                if "Voicemeeter Out B1" in audio.get_device_info_by_index(i)["name"]:
-                    device_index = i
-                    break
-
+            default_loopback = audio.get_default_wasapi_loopback()
+        else: 
+            default_loopback = audio.get_default_wasapi_device() 
+ 
+        device_index = default_loopback['index']
+        CHANNELS = default_loopback['maxInputChannels']
+        RATE = int(default_loopback['defaultSampleRate'])
         try:
             stream = audio.open(
                 format=FORMAT,
@@ -123,7 +126,7 @@ def recognize_stream(source_type, durationTime, deepgram_key, audio_language):
         capture_thread = threading.Thread(target=capture_audio, args=(audio_queue, stream, duration, start_time, capture_done_event))
         capture_thread.start()
 
-        transcription_thread = threading.Thread(target=process_transcriptions, args=(audio_queue, deepgram_key, capture_done_event, audio_language))
+        transcription_thread = threading.Thread(target=process_transcriptions, args=(audio_queue, deepgram_key, capture_done_event, audio_language, CHANNELS, RATE))
         transcription_thread.start()
 
         capture_thread.join()
