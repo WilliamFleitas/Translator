@@ -1,26 +1,5 @@
 import { IpcRendererEvent } from 'electron'
 
-export interface DefaultAudioDeviceType {
-  name: string
-  id: string
-}
-
-export interface CheckVoicemeeterIsRunningType {
-  active?: boolean
-  message: string
-}
-
-export interface VCSettingsStatusType {
-  strip_A1: boolean
-  strip_B1: boolean
-  bus_0_name: string
-}
-
-export interface SetVCSetupType {
-  device_name: string
-  message: string
-}
-
 export interface StartStreamingType {
   status: 0 | 1 | 2
   sentence?: string
@@ -56,14 +35,6 @@ export interface Api {
     region: string | undefined
   ) => Promise<ApiResponse<StartStreamingType>>
   stopStreaming: () => Promise<ApiResponse<{ status: string }>>
-  getAudioDevices: () => Promise<ApiResponse<DefaultAudioDeviceType[]>>
-  setVoicemeeterOutput: (deviceName: string, deviceIndex: number) => Promise<ApiResponse<string>>
-  getDefaultAudioDevice: () => Promise<ApiResponse<DefaultAudioDeviceType>>
-  getVoicemeeterApiCalls: (
-    queryType: 'isRunning' | 'open' | 'close'
-  ) => Promise<ApiResponse<CheckVoicemeeterIsRunningType>>
-  getVCSettingsStatus: () => Promise<ApiResponse<VCSettingsStatusType>>
-  setVCSetup: (device_name: string) => Promise<ApiResponse<SetVCSetupType>>
   getTranslation: (
     transcription: string,
     audio_language: AudioLanguageType,

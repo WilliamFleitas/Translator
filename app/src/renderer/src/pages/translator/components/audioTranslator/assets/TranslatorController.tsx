@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useState } from 'react'
 import SelectMenu, { MenuOptionType } from '../../../../../components/menu/SelectMenu'
 import { FaPlay, FaStop, FaMicrophone, FaLock } from 'react-icons/fa'
 import { HiSpeakerWave } from 'react-icons/hi2'
@@ -12,7 +12,6 @@ import {
 
 import { DurationTimeType } from '@renderer/globalTypes/globalApi'
 import { toast } from 'react-toastify'
-import { VCStatusContext } from '@renderer/components/context/VCContext'
 import DefaultLoading from '@renderer/components/loading/DefaultLoading'
 import { deepgramLanguages } from './TranslatorTextarea'
 import { DeepgramSettingsStatusContext } from '@renderer/components/context/DeepgramSettingsContext'
@@ -76,7 +75,6 @@ const TranslatorController = ({
   setTranscriptionWords,
   handleSelectedTranscriptionLanguageChange
 }: TranslatorControllerPropsType): React.ReactElement => {
-  const { state } = useContext(VCStatusContext)
   const {
     deepgramSettingsState: { APIKey }
   } = useContext(DeepgramSettingsStatusContext)
@@ -87,9 +85,7 @@ const TranslatorController = ({
     {
       label: 'Speaker',
       value: 'speaker',
-      id: 0,
-      disabled: state.default_audio_device && state.is_running && state.lock_status ? false : true,
-      disabledTitle: 'Run Voicemeeter to unlock'
+      id: 0
     },
     {
       label: 'Mic',
@@ -158,13 +154,6 @@ const TranslatorController = ({
     }
   }
 
-  useEffect(() => {
-    if (selectedAudioDevice.value === 'speaker') {
-      if (!state.default_audio_device || !state.is_running || !state.lock_status) {
-        handleSelectedAudioDeviceChange(audioDevices[1])
-      }
-    }
-  }, [state])
   return (
     <nav className="py-3 px-4 gap-8 flex flex-col sm:flex-row w-full justify-between items-stretch text-start relative bg-secondary-background">
       <section className="flex flex-row w-full md:w-fit h-fit text-start items-center justify-between md:justify-start  gap-4 text-lg ">

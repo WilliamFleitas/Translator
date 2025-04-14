@@ -4,14 +4,8 @@ import dotenv from 'dotenv'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { spawn, ChildProcess } from 'child_process'
 import fs from 'fs'
-import {
-  ApiResponse,
-  DeviceType,
-  DurationTimeType,
-  StartStreamingType,
-  CheckVoicemeeterIsRunningType
-} from '../preload'
-import textTranslator from './backend/utils/translator/textTranslator'
+import { ApiResponse, DeviceType, DurationTimeType, StartStreamingType } from '../preload'
+import textTranslator from './backend/translator/textTranslator'
 
 dotenv.config()
 
@@ -28,10 +22,9 @@ const getScriptPath = (packagePath: string[], devPath: string): any => {
         'src',
         'main',
         'backend',
-        'utils',
         ...packagePath
       )
-    : path.resolve(__dirname, `../../src/main/backend/utils/${devPath}`)
+    : path.resolve(__dirname, `../../src/main/backend/${devPath}`)
 }
 
 const venvPython = isPackaged
@@ -178,245 +171,6 @@ ipcMain.on('toggle-overlay', (_event, enableOverlay: boolean) => {
   }
 })
 
-ipcMain.handle(
-  'voicemeeter-api-calls',
-  async (_event, queryType: 'isRunning' | 'open' | 'close') => {
-    return new Promise((resolve) => {
-      const vcStatusPath = 'getVoicemeeterStatus.py'
-      const vcRunOrClosePath = 'openOrCloseVoicemeeter.py'
-      const scriptPath = getScriptPath(
-        [
-          'voicemeeterApi',
-          `${queryType === 'open' || queryType === 'close' ? vcRunOrClosePath : vcStatusPath}`
-        ],
-        `voicemeeterApi/${queryType === 'open' || queryType === 'close' ? vcRunOrClosePath : vcStatusPath}`
-      )
-      if (isPackaged && !fs.existsSync(venvPython)) {
-        return resolve({
-          success: false,
-          error: `Python executable not found at: ${venvPython}`
-        })
-      }
-
-      const pythonProcess = spawn(venvPython, ['-u', scriptPath, queryType])
-
-      let outputData: ApiResponse<CheckVoicemeeterIsRunningType>
-
-      pythonProcess.stdout.on('data', (data) => {
-        const dataToString = data.toString().trim().split('\n')
-        try {
-          const response: ApiResponse<CheckVoicemeeterIsRunningType> = JSON.parse(dataToString)
-          if (response.success) {
-            outputData = response
-          } else {
-            throw Error(response.error)
-          }
-        } catch (error) {
-          return resolve({
-            success: false,
-            error: error instanceof Error ? error.message : String(error)
-          })
-        }
-      })
-
-      pythonProcess.stderr.on('data', (data) => {
-        const message = data.toString().trim()
-        console.log('mesagetderr:', message)
-      })
-
-      pythonProcess.on('error', (error) => {
-        return resolve({ success: false, error: error.message })
-      })
-
-      pythonProcess.on('close', (code) => {
-        if (code === 0) {
-          resolve(outputData)
-        } else {
-          resolve({ success: false, error: `Voicemeter-api ${queryType} script failed` })
-        }
-      })
-    })
-  }
-)
-ipcMain.handle('get_VC_settings_status', async () => {
-  return new Promise((resolve) => {
-    const scriptPath = getScriptPath(
-      ['voicemeeterApi', 'getVCSettingsStatus.py'],
-      'voicemeeterApi/getVCSettingsStatus.py'
-    )
-    if (isPackaged && !fs.existsSync(venvPython)) {
-      return resolve({
-        success: false,
-        error: `Python executable not found at: ${venvPython}`
-      })
-    }
-
-    const pythonProcess = spawn(venvPython, ['-u', scriptPath])
-
-    let outputData = ''
-
-    pythonProcess.stdout.on('data', (data) => {
-      outputData += data.toString()
-    })
-
-    pythonProcess.stderr.on('data', (data) => {
-      console.error(`Python script error: ${data.toString().trim()}`)
-    })
-
-    pythonProcess.on('close', (code) => {
-      if (code === 0) {
-        try {
-          const response = JSON.parse(outputData.trim())
-          resolve(response)
-        } catch (error: any) {
-          resolve({
-            success: false,
-            error: `Error parsing JSON output: ${error.message}`
-          })
-        }
-      } else {
-        resolve({
-          success: false,
-          error: `Error executing Python script. Code: ${code}`
-        })
-      }
-    })
-  })
-})
-
-ipcMain.handle('set_VC_setup', async (_event, device_name: string) => {
-  return new Promise((resolve) => {
-    const scriptPath = getScriptPath(
-      ['voicemeeterApi', 'setVCSetup.py'],
-      'voicemeeterApi/setVCSetup.py'
-    )
-    if (isPackaged && !fs.existsSync(venvPython)) {
-      return resolve({
-        success: false,
-        error: `Python executable not found at: ${venvPython}`
-      })
-    }
-    const pythonProcess = spawn(venvPython, ['-u', scriptPath, device_name])
-
-    let outputData = ''
-
-    pythonProcess.stdout.on('data', (data) => {
-      outputData += data.toString()
-    })
-
-    pythonProcess.stderr.on('data', (data) => {
-      console.error(`Python script error: ${data.toString().trim()}`)
-    })
-
-    pythonProcess.on('close', (code) => {
-      if (code === 0) {
-        try {
-          const response = JSON.parse(outputData.trim())
-          resolve(response)
-        } catch (error: any) {
-          resolve({
-            success: false,
-            error: `Error parsing JSON output: ${error.message}`
-          })
-        }
-      } else {
-        resolve({
-          success: false,
-          error: `Error executing Python script. Code: ${code}`
-        })
-      }
-    })
-  })
-})
-
-ipcMain.handle('find_default_audio_device', async () => {
-  return new Promise((resolve) => {
-    const scriptPath = getScriptPath(
-      ['getUserDefaultAudioDevice.py'],
-      'getUserDefaultAudioDevice.py'
-    )
-    if (isPackaged && !fs.existsSync(venvPython)) {
-      return resolve({
-        success: false,
-        error: `Python executable not found at: ${venvPython}`
-      })
-    }
-    const pythonProcess = spawn(venvPython, ['-u', scriptPath])
-
-    let outputData = ''
-
-    pythonProcess.stdout.on('data', (data) => {
-      outputData += data.toString()
-    })
-
-    pythonProcess.stderr.on('data', (data) => {
-      console.error(`Error parsing JSON output: ${data.toString().trim()}`)
-    })
-
-    pythonProcess.on('close', (code) => {
-      if (code === 0) {
-        try {
-          const response = JSON.parse(outputData.trim())
-          resolve(response)
-        } catch (error: any) {
-          resolve({
-            success: false,
-            error: `Error parsing JSON output: ${error.message}`
-          })
-        }
-      } else {
-        resolve({
-          success: false,
-          error: `Error executing Python script. Code: ${code}`
-        })
-      }
-    })
-  })
-})
-
-ipcMain.handle('find-audio-devices', async () => {
-  return new Promise((resolve) => {
-    const scriptPath = getScriptPath(['getUserAudioDevices.py'], 'getUserAudioDevices.py')
-
-    if (isPackaged && !fs.existsSync(venvPython)) {
-      return resolve({
-        success: false,
-        error: `Python executable not found at: ${venvPython}`
-      })
-    }
-    const pythonProcess = spawn(venvPython, ['-u', scriptPath])
-
-    let outputData = ''
-
-    pythonProcess.stdout.on('data', (data) => {
-      outputData += data.toString()
-    })
-
-    pythonProcess.stderr.on('data', (data) => {
-      console.error(`Error parsing JSON output: ${data.toString().trim()}`)
-    })
-
-    pythonProcess.on('close', (code) => {
-      if (code === 0) {
-        try {
-          const response = JSON.parse(outputData.trim())
-          resolve(response)
-        } catch (error: any) {
-          resolve({
-            success: false,
-            error: `Error parsing JSON output: ${error.message}`
-          })
-        }
-      } else {
-        resolve({
-          success: false,
-          error: `Error executing Python script. Code: ${code}`
-        })
-      }
-    })
-  })
-})
-
 let startStreamingProcess: ChildProcess | null = null
 
 ipcMain.handle(
@@ -432,7 +186,10 @@ ipcMain.handle(
     region: string | undefined
   ) => {
     return new Promise((resolve) => {
-      const scriptPath = getScriptPath(['speechToTextPy.py'], 'speechToTextPy.py')
+      const scriptPath = getScriptPath(
+        ['transcription', 'speechToTextPy.py'],
+        'transcription/speechToTextPy.py'
+      )
 
       if (isPackaged && !fs.existsSync(venvPython)) {
         return resolve({

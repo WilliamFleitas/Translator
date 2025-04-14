@@ -1,5 +1,4 @@
 import TranslatorTextarea from './assets/TranslatorTextarea'
-import TranslatorSettings from '../translatorSettings/TranslatorSettings'
 import useTranscriptionListener from '@renderer/assets/customHooks/useTranscriptionListener'
 import useTranslationListener from '@renderer/assets/customHooks/useTranslationListener'
 import { useState } from 'react'
@@ -42,9 +41,6 @@ const PCAudioTranslator: React.FC = () => {
           setTranscriptionError={setTranscriptionError}
           setTranscriptionWords={setTranscriptionWords}
         />
-      </div>
-      <div className="flex flex-col w-full h-full text-start items-start justify-start ">
-        <TranslatorSettings />
       </div>
     </article>
   )
