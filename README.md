@@ -13,20 +13,21 @@ Translator is a desktop application built with **Electron.js**, featuring **Reac
 - 🐍 **Python Backend**: Uses Python scripts executed via Node.js to handle audio processing. 
 
 ## **Requirements**
-1- Install Dependencies.
-    - Node.js (Latest LTS version recommended).
-    - Python 3.12 (Ensure it is added to PATH).
+1- Environment requirements.
+- Node.js (Latest LTS version recommended).
+- [Install UV](https://astral.sh/blog/uv).
+
 2- Setup Python Environment. This project uses a virtual environment to manage Python dependencies. Run the following commands in PowerShell:
-    ```
-      cd app
-      uv venv .venv
-      .venv\Scripts\activate
-      uv sync
-    ```
+```
+cd app
+uv venv .venv
+.venv\Scripts\activate
+uv sync
+```
 
 3- Install Node.js Dependencies.<br/>
-     - Run the following command in the root directory of the project to install dependencies: `npm install`
-     - Running the Application. To start the application in development mode: `npm run dev`
-     - To rebuild dependencies after installing or modifying native modules: `npm rebuild`
-     - To package the application for distribution: `npm run build`
+- Run the following command in the root directory of the project to install dependencies: `npm install`
+- Running the Application. To start the application in development mode: `npm run dev`
+- To rebuild dependencies after installing or modifying native modules: `npm rebuild`
+- To package the application for distribution: `npm run build`
 
