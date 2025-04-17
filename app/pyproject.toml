@@ -1,7 +1,7 @@
 [project]
 name = "translator"
 version = "2.0.0"
-description = "Translator App, using Deepgram transcriptions, Azure AI Translations and Voicemeeter to capture audio from Output Audio"
+description = "Translator App, using Deepgram transcriptions, Azure AI Translations and PyAudio to capture audio from Output Audio or Microphone"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
