@@ -42,8 +42,8 @@
         ]
       },
       {
-        "from": "src/main/backend/utils",
-        "to": "src/main/backend/utils",
+        "from": "src/main/backend",
+        "to": "src/main/backend",
         "filter": [
           "**/*"
         ]
