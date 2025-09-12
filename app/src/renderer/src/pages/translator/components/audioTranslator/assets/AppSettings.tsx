@@ -5,6 +5,8 @@ import PasswordInput from '@renderer/components/customInput/PasswordInput'
 import { FaRegEdit } from 'react-icons/fa'
 import { AzureSettingsStatusContext } from '@renderer/components/context/AzureSettingsContext'
 import { DeepgramSettingsStatusContext } from '@renderer/components/context/DeepgramSettingsContext'
+import Modal from '@renderer/assets/Modal'
+import TranslatorTutorial from './TranslatorTutorial'
 
 const AppSettings = (): React.ReactElement => {
   const [azureAPIKeyValue, setAzureAPIKeyValue] = useState<string>('')
@@ -14,9 +16,14 @@ const AppSettings = (): React.ReactElement => {
   const [deepgramAPIKeyValue, setDeepgramAPIKeyValue] = useState<string>('')
   const [editDeepgramSettingsIsEnabled, setEditDeepgramSettingsIsEnabled] = useState<boolean>(false)
 
+  const [enableTutorial, setEnableTutorial] = useState<boolean>(false)
+
   const { updateAzureSettingsState } = useContext(AzureSettingsStatusContext)
   const { updateDeepgramSettingsState } = useContext(DeepgramSettingsStatusContext)
 
+  const handleEnableTutorialClick = (): void => {
+    setEnableTutorial(!enableTutorial)
+  }
   const handleAzureKeyChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const target = event.target as HTMLInputElement
     setAzureAPIKeyValue(target.value)
@@ -131,6 +138,14 @@ const AppSettings = (): React.ReactElement => {
             )}
           </div>
         }
+      />
+      <button type="button" onClick={handleEnableTutorialClick}>
+        Tutorial +
+      </button>
+      <Modal
+        isOpen={enableTutorial}
+        onClose={handleEnableTutorialClick}
+        Content={<TranslatorTutorial />}
       />
     </div>
   )
