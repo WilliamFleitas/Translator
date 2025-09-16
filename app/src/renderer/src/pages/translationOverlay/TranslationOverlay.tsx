@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { TiArrowLeftThick, TiArrowRightThick } from 'react-icons/ti'
 import { MdFullscreen } from 'react-icons/md'
-import './TranslationOverlay.css'
 import useTranslationListener from '@renderer/assets/customHooks/useTranslationListener'
 import useTranscriptionListener from '@renderer/assets/customHooks/useTranscriptionListener'
-import { IoCloseSharp } from 'react-icons/io5'
+import { PiBroomDuotone } from 'react-icons/pi'
+import { TiArrowSortedDown } from 'react-icons/ti'
+import { TiArrowSortedUp } from 'react-icons/ti'
+import './TranslationOverlay.css'
 
 interface CustomTextareaPropsType {
   content: string
@@ -26,8 +28,8 @@ const CustomTextarea = ({
       value={content}
       placeholder={placeholder}
       disabled={disabled}
-      className={`custom-textarea text-[1.6rem] resize-none shrink  overflow-auto  flex w-full h-full px-2 font-semibold outline-none focus:border-0 focus:outline-none focus:ring-0 ring-0 `}
-      style={{ color: color }}
+      className={`custom-textarea text-[1.6rem] resize-none shrink  overflow-auto  flex w-full h-full px-2 font-semibold outline-none focus:border-0 focus:outline-none focus:ring-0 ring-0`}
+      style={{ color: color, textShadow: '-1px 1px 8px #ffffff' }}
     />
   )
 }
@@ -38,6 +40,8 @@ const TranslationOverlay: React.FC = () => {
   const [tabIsEnabled, setTabIsEnabled] = useState<boolean>(false)
   const [transcriptionColor, setTranscriptionColor] = useState<string>('#ffffff')
   const [translationColor, setTranslationColor] = useState<string>('#f6b73c')
+  const [enableTranscriptionOverlay, setEnableTranscriptionOverlay] = useState<boolean>(true)
+  const [enableTranslationOverlay, setEnableTranslationOverlay] = useState<boolean>(true)
 
   const [hoveredOverlay, setHoveredOverlay] = useState<boolean>(false)
 
@@ -47,6 +51,14 @@ const TranslationOverlay: React.FC = () => {
     })
   const { translationSentence, translationError, setTranslationSentence } = useTranslationListener()
 
+  const handleEnableTranscriptionOverlayClick = (): void => {
+    if (enableTranscriptionOverlay && !enableTranslationOverlay) return
+    setEnableTranscriptionOverlay(!enableTranscriptionOverlay)
+  }
+  const handleEnableTranslationOverlayClick = (): void => {
+    if (enableTranslationOverlay && !enableTranscriptionOverlay) return
+    setEnableTranslationOverlay(!enableTranslationOverlay)
+  }
   const handleClearOverlayText = (): void => {
     setTranslationSentence('')
     setTranscriptionSentence('')
@@ -127,7 +139,7 @@ const TranslationOverlay: React.FC = () => {
                 type="button"
                 onClick={handleClearOverlayText}
               >
-                <IoCloseSharp className="w-4 h-4" />
+                <PiBroomDuotone className="w-4 h-4" />
               </button>
               <div className="pointer-events-auto bg-primary-button hover:bg-primary-button-hover rounded-md p-1 leading-0 ">
                 <input
@@ -139,6 +151,25 @@ const TranslationOverlay: React.FC = () => {
                   onChange={handleOverlayColorChange}
                 />
               </div>
+              <button
+                className={`flex flex-row gap-1 text-start items-center justify-start pointer-events-auto bg-primary-button hover:bg-primary-button-hover rounded-md py-1 px-2 leading-0 `}
+                style={{
+                  color: transcriptionColor
+                }}
+                type="button"
+                title={
+                  enableTranscriptionOverlay
+                    ? 'Hide Transcription overlay'
+                    : 'Show Transcription overlay'
+                }
+                onClick={handleEnableTranscriptionOverlayClick}
+              >
+                {!enableTranscriptionOverlay ? (
+                  <TiArrowSortedDown className="w-4 h-4 " />
+                ) : (
+                  <TiArrowSortedUp className="w-4 h-4 " />
+                )}
+              </button>
               <div className="pointer-events-auto bg-primary-button hover:bg-primary-button-hover rounded-md p-1 leading-0 ">
                 <input
                   className="w-6 h-4"
@@ -150,6 +181,24 @@ const TranslationOverlay: React.FC = () => {
                 />
               </div>
               <button
+                className={`flex flex-row gap-1 text-start items-center justify-start pointer-events-auto bg-primary-button hover:bg-primary-button-hover rounded-md py-1 px-2 leading-0`}
+                style={{
+                  color: translationColor
+                }}
+                type="button"
+                title={
+                  enableTranslationOverlay ? 'Hide Translation overlay' : 'Show Translation overlay'
+                }
+                onClick={handleEnableTranslationOverlayClick}
+              >
+                {!enableTranslationOverlay ? (
+                  <TiArrowSortedDown className="w-4 h-4 " />
+                ) : (
+                  <TiArrowSortedUp className="w-4 h-4 " />
+                )}
+              </button>
+
+              <button
                 className="pointer-events-auto bg-primary-button hover:bg-primary-button-hover rounded-md p-1 leading-0   draggable-obj"
                 title="Drag overlay"
                 type="button"
@@ -160,6 +209,7 @@ const TranslationOverlay: React.FC = () => {
           ) : (
             <></>
           )}
+
           <button
             className={` pointer-events-auto hover:bg-primary-button-hover rounded-md p-1 leading-0 ${tabIsEnabled ? 'bg-primary-button' : 'bg-primary-button/30'}`}
             title={`${tabIsEnabled ? 'Disable background' : 'Enable background'}`}
@@ -184,7 +234,7 @@ const TranslationOverlay: React.FC = () => {
         </div>
       </div>
       <div
-        className={`flex flex-col text-start items-start justify-start w-full h-full  py-2 overflow-hidden  border-t border-x ${tabIsEnabled ? 'bg-secondary-background  border-primary-background' : 'border-transparent'}  ${transcriptionError?.length || transcriptionError?.length ? '' : 'rounded-tl-md'}`}
+        className={`flex-col text-start items-start justify-start w-full h-full  py-2 overflow-hidden  border-t border-x ${tabIsEnabled ? 'bg-secondary-background  border-primary-background' : 'border-transparent'}  ${transcriptionError?.length || transcriptionError?.length ? '' : 'rounded-tl-md'}  ${!enableTranscriptionOverlay ? 'hidden' : 'flex'}`}
       >
         <div className="flex flex-col h-full w-full overflow-hidden">
           <CustomTextarea
@@ -200,7 +250,7 @@ const TranslationOverlay: React.FC = () => {
         className={`w-full h-[0.2rem]  ${tabIsEnabled ? 'bg-primary-button' : 'bg-primary-button/10 rounded-md'}`}
       ></span>
       <div
-        className={`flex flex-col text-start items-start justify-start w-full h-full  py-2 overflow-hidden rounded-b-md border-b border-x ${tabIsEnabled ? 'bg-secondary-background  border-primary-background' : 'border-transparent'}`}
+        className={`flex-col text-start items-start justify-start w-full h-full  py-2 overflow-hidden rounded-b-md border-b border-x ${tabIsEnabled ? 'bg-secondary-background  border-primary-background' : 'border-transparent'} ${!enableTranslationOverlay ? 'hidden' : 'flex'}`}
       >
         <div className="flex flex-col h-full w-full overflow-hidden">
           <CustomTextarea

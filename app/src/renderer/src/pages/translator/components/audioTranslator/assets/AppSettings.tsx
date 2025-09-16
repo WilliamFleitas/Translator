@@ -139,8 +139,12 @@ const AppSettings = (): React.ReactElement => {
           </div>
         }
       />
-      <button type="button" onClick={handleEnableTutorialClick}>
-        Tutorial +
+      <button
+        className="text-3xl font-bold text-[#ffffff] hover:text-zinc-500 cursor-pointer"
+        type="button"
+        onClick={handleEnableTutorialClick}
+      >
+        How to get your API Key.
       </button>
       <Modal
         isOpen={enableTutorial}

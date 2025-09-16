@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react'
 import TranslatorController from './TranslatorController'
 import SelectMenu, { MenuOptionType } from '@renderer/components/menu/SelectMenu'
 import { AzureSettingsStatusContext } from '@renderer/components/context/AzureSettingsContext'
+import { PiBroomDuotone } from 'react-icons/pi'
 
 export const deepgramLanguages = [
   { id: 0, value: 'detect_language', label: 'Detect Language' },
@@ -183,7 +184,14 @@ const TranslatorTextarea = ({
     }, 1000)
   }
   const handleTextarea2Change = (): void => {}
-
+  const cleanText = (): void => {
+    setText1('')
+    setText2('')
+    if (textarea1Ref.current && textarea2Ref.current) {
+      textarea1Ref.current.style.height = 'auto'
+      textarea2Ref.current.style.height = 'auto'
+    }
+  }
   const handleSelectedTranslationLanguageChange = (resObj: MenuOptionType): void => {
     setSelectedTranslationLanguage(resObj)
   }
@@ -276,6 +284,13 @@ const TranslatorTextarea = ({
           ) : (
             <></>
           )}
+          <button
+            type="button"
+            onClick={cleanText}
+            className="absolute top-1 right-1 hover:bg-primary-button-hover p-1 rounded-md"
+          >
+            <PiBroomDuotone className="w-4 h-4" />
+          </button>
         </div>
         <div className="mt-auto">
           <TranslatorController
