@@ -35,15 +35,15 @@
     ],
     "extraResources": [
       {
-        "from": "venv",
-        "to": "venv",
+        "from": ".venv",
+        "to": ".venv",
         "filter": [
           "**/*"
         ]
       },
       {
-        "from": "src/main/backend/utils",
-        "to": "src/main/backend/utils",
+        "from": "src/main/backend",
+        "to": "src/main/backend",
         "filter": [
           "**/*"
         ]
@@ -57,6 +57,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "3.0.1",
     "@electron-toolkit/utils": "3.0.0",
+    "@headlessui/react": "2.2.8",
     "dotenv": "16.4.7",
     "electron-updater": "6.1.7"
   },
