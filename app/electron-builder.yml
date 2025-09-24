@@ -1,7 +1,12 @@
-appId: com.translatorElectron.app
-productName: TranslatorAPP
+appId: com.williamfleitas.translator
+productName: Translator
 directories:
   buildResources: build
+publish:
+  provider: github
+  owner: WilliamFleitas
+  repo: Translator
+  releaseType: release
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -12,17 +17,18 @@ files:
   - '!**/{.git,.github,.vscode,node_modules,test}/**'
   - '!**/*.{log,md,iml}'
 asarUnpack:
-  - resources/**
+  - 'backend/**'
 win:
   target: nsis
   icon: build/icon.ico
-  executableName: TranslatorExecutable
+  executableName: Translator
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  category: public.app-category.utilities
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
