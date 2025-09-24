@@ -1,8 +1,9 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, screen } from 'electron'
+import { app, BrowserWindow, ipcMain, Tray, Menu, screen, dialog } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import path, { join } from 'path'
 import dotenv from 'dotenv'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { spawn, ChildProcess } from 'child_process'
+import { spawn, ChildProcess, exec } from 'child_process'
 import fs from 'fs'
 import { ApiResponse, DeviceType, DurationTimeType, StartStreamingType } from '../preload'
 import textTranslator from './backend/translator/textTranslator'
@@ -14,28 +15,13 @@ let mainWindow: BrowserWindow | null = null
 let translationOverlayWindow: BrowserWindow | null = null
 const isPackaged = app.isPackaged
 
-const getScriptPath = (packagePath: string[], devPath: string): any => {
+const getScriptPath = (_packagePath: string[], devPath: string): any => {
   return isPackaged
-    ? path.join(
-        app.getPath('userData').replace('Roaming', 'Local\\Programs'),
-        'resources',
-        'src',
-        'main',
-        'backend',
-        ...packagePath
-      )
+    ? path.join(process.resourcesPath, 'backend', 'transcription', 'speechToText.exe')
     : path.resolve(__dirname, `../../src/main/backend/${devPath}`)
 }
 
-const venvPython = isPackaged
-  ? path.join(
-      app.getPath('userData').replace('Roaming', 'Local\\Programs'),
-      'resources',
-      '.venv',
-      'Scripts',
-      'python.exe'
-    )
-  : path.resolve(__dirname, '../../.venv/Scripts/python')
+const venvPython = isPackaged ? '' : path.resolve(__dirname, '../../.venv/Scripts/python')
 
 function createTray(): void {
   const trayIcon = app.isPackaged
@@ -93,7 +79,21 @@ function createWindow(): void {
       createTray()
     }
   })
-
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    if (params.isEditable) {
+      const menu = Menu.buildFromTemplate([
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { type: 'separator' },
+        { role: 'selectAll' }
+      ])
+      menu.popup({ window: mainWindow! })
+    }
+  })
   mainWindow.on('close', (event) => {
     event.preventDefault()
     mainWindow?.hide()
@@ -172,7 +172,7 @@ ipcMain.on('toggle-overlay', (_event, enableOverlay: boolean) => {
 })
 
 let startStreamingProcess: ChildProcess | null = null
-
+let stoppedByUser: boolean = false
 ipcMain.handle(
   'start-streaming',
   (
@@ -191,31 +191,31 @@ ipcMain.handle(
         'transcription/speechToTextPy.py'
       )
 
-      if (isPackaged && !fs.existsSync(venvPython)) {
-        return resolve({
-          success: false,
-          error: `Python executable not found at: ${venvPython}`
-        })
-      }
-      if (startStreamingProcess) {
-        return resolve({ success: false, error: 'The capture is already running' })
+      if (!fs.existsSync(scriptPath)) {
+        const msg = `Python script not found at: ${scriptPath}`
+        return resolve({ success: false, error: msg })
       }
 
-      startStreamingProcess = spawn(venvPython, [
-        '-u',
-        scriptPath,
-        device,
-        durationTime,
-        deepgram_key,
-        audio_language
-      ])
+      if (!isPackaged && !fs.existsSync(venvPython)) {
+        const msg = `Python executable not found at: ${venvPython}`
+        return resolve({ success: false, error: msg })
+      }
+
+      if (startStreamingProcess) {
+        const msg = 'Streaming process already running'
+        return resolve({ success: false, error: msg })
+      }
+
+      const safeDeepgramKey = deepgram_key ?? ''
+      startStreamingProcess = isPackaged
+        ? spawn(scriptPath, [device, durationTime, safeDeepgramKey, audio_language])
+        : spawn(venvPython, ['-u', scriptPath, device, durationTime, deepgram_key, audio_language])
       let outputData: ApiResponse<StartStreamingType> | null = null
       let translationError: boolean = false
 
       if (startStreamingProcess && startStreamingProcess.stdout && startStreamingProcess.stderr) {
         startStreamingProcess.stdout.on('data', async (data) => {
           const receivedData = data.toString().trim()
-
           try {
             const response: ApiResponse<StartStreamingType> = JSON.parse(receivedData)
             if (response.success) {
@@ -283,25 +283,39 @@ ipcMain.handle(
       startStreamingProcess.on('close', (code) => {
         if (code === 0) {
           resolve(outputData)
-        } else if (code === null) {
+        } else if (code === null || stoppedByUser) {
           resolve({
             success: true,
             data: { status: 1, message: 'Audio capturing ended.' }
           })
         } else {
-          resolve({ success: false, error: 'Speech to text script failed' })
+          resolve({
+            success: false,
+            error: `Speech to text script failed.`
+          })
         }
         startStreamingProcess = null
+        stoppedByUser = false
       })
     })
   }
 )
 
 ipcMain.handle('stop-streaming', async () => {
+  stoppedByUser = true
   if (startStreamingProcess !== null) {
     try {
       if (!startStreamingProcess.killed) {
-        startStreamingProcess.kill()
+        if (isPackaged) {
+          exec(`taskkill /pid ${startStreamingProcess.pid} /T /F`, (err) => {
+            if (err) {
+              console.error('Error killing process:', err)
+              throw Error('Error killing process:', err)
+            }
+          })
+        } else {
+          startStreamingProcess.kill()
+        }
         startStreamingProcess = null
 
         return { success: true, data: { status: 'Capture finished' } }
@@ -309,7 +323,7 @@ ipcMain.handle('stop-streaming', async () => {
         return { success: false, data: { status: 'The process was already stopped.' } }
       }
     } catch (error) {
-      return { success: false, data: { status: 'Error stopping the process' } }
+      return { success: false, data: { status: 'Error stopping the process', error } }
     }
   } else {
     return { success: false, data: { status: 'No process is running.' } }
@@ -349,10 +363,52 @@ app.whenReady().then(() => {
 
   createWindow()
 
+  autoUpdater.autoDownload = false
+
+  autoUpdater.on('update-available', async (info) => {
+    const result = await dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: 'Update Available',
+      message: `Version ${info.version} is available. Do you want to download it now?`,
+      buttons: ['Download now', 'Later'],
+      defaultId: 0,
+      cancelId: 1
+    })
+
+    if (result.response === 0) {
+      autoUpdater.downloadUpdate()
+    }
+  })
+
+  autoUpdater.on('update-downloaded', async () => {
+    const result = await dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: 'Update Ready',
+      message: 'The update has been downloaded. Do you want to restart the app now to apply it?',
+      buttons: ['Restart now', 'Later'],
+      defaultId: 0,
+      cancelId: 1
+    })
+
+    if (result.response === 0) {
+      autoUpdater.quitAndInstall()
+    }
+  })
+
+  autoUpdater.on('error', (err) => {
+    console.error('Error in auto-updater:', err)
+    mainWindow?.webContents.send(
+      'update_error',
+      err == null ? 'unknown' : (err.stack || err).toString()
+    )
+  })
+  autoUpdater.checkForUpdates()
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+
 ipcMain.on('window-minimize', () => {
   mainWindow?.minimize()
 })
