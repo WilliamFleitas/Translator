@@ -4,7 +4,6 @@ import { AzureSettingsContext } from './components/context/AzureSettingsContext'
 import TranslationOverlay from './pages/translationOverlay/TranslationOverlay'
 import { useEffect } from 'react'
 import { DeepgramSettingsContext } from './components/context/DeepgramSettingsContext'
-import { ipcRenderer } from 'electron'
 import { toast } from 'react-toastify'
 
 const PUBLIC_URL = ''
@@ -21,16 +20,16 @@ const MainRoutes: React.FC = () => {
   }, [location])
 
   useEffect(() => {
-    ipcRenderer.on('update_error', (_, message) => {
+    const updateErrorListener = (_: any, message: string): void => {
       console.error('Update error:', message)
       toast.error(`Error checking for updates: ${message}`, {
         isLoading: false,
         autoClose: 5000
       })
-    })
-
+    }
+    window.api.on('update_error', updateErrorListener)
     return (): void => {
-      ipcRenderer.removeAllListeners('update_error')
+      window.api.removeListener('update_error', updateErrorListener)
     }
   }, [])
   return (
