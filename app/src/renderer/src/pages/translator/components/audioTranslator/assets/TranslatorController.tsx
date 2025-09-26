@@ -106,6 +106,23 @@ const TranslatorController = ({
     setSelectedTimeduration(resObj)
   }
 
+  const handleStopRecording = async (): Promise<void> => {
+    try {
+      setTranscriptionIsLoading(true)
+      await window.api.stopStreaming()
+      setIsCapturingAudio(false)
+      setTranscriptionWords('')
+      setTranscriptionSentence(transcriptionContent.slice(0, transcriptionContent.length - 2) + '.')
+    } catch (error: any) {
+      toast.error(`handleStopRecording ${error.message}`, {
+        isLoading: false,
+        autoClose: 5000
+      })
+    } finally {
+      setTranscriptionIsLoading(false)
+    }
+  }
+
   const handleStartRecording = async (): Promise<void> => {
     try {
       setTranscriptionIsLoading(true)
@@ -123,7 +140,7 @@ const TranslatorController = ({
         azureAPIKey,
         azureAPIRegion
       )
-      if (response.success) {
+      if (response.success === true) {
         if (response.data.status !== undefined && response.data.status === 1) {
           setIsCapturingAudio(false)
         }
@@ -132,22 +149,9 @@ const TranslatorController = ({
       }
     } catch (err: any) {
       setIsCapturingAudio(false)
+      handleStopRecording()
       console.log('error', err)
       toast.error(`handleStartRecording ${err.message}`, {
-        isLoading: false,
-        autoClose: 5000
-      })
-    }
-  }
-
-  const handleStopRecording = async (): Promise<void> => {
-    try {
-      await window.api.stopStreaming()
-      setIsCapturingAudio(false)
-      setTranscriptionWords('')
-      setTranscriptionSentence(transcriptionContent.slice(0, transcriptionContent.length - 2) + '.')
-    } catch (error: any) {
-      toast.error(`handleStopRecording ${error.message}`, {
         isLoading: false,
         autoClose: 5000
       })

@@ -17,3 +17,5 @@ credentials.json
 venv/
 package-lock.json
 pnpm-lock.yaml
+speechToText.exe
+speechToText.spec

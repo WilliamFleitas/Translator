@@ -4,6 +4,7 @@ import { AzureSettingsContext } from './components/context/AzureSettingsContext'
 import TranslationOverlay from './pages/translationOverlay/TranslationOverlay'
 import { useEffect } from 'react'
 import { DeepgramSettingsContext } from './components/context/DeepgramSettingsContext'
+import { toast } from 'react-toastify'
 
 const PUBLIC_URL = ''
 
@@ -18,6 +19,19 @@ const MainRoutes: React.FC = () => {
     }
   }, [location])
 
+  useEffect(() => {
+    const updateErrorListener = (_: any, message: string): void => {
+      console.error('Update error:', message)
+      toast.error(`Error checking for updates: ${message}`, {
+        isLoading: false,
+        autoClose: 5000
+      })
+    }
+    window.api.on('update_error', updateErrorListener)
+    return (): void => {
+      window.api.removeListener('update_error', updateErrorListener)
+    }
+  }, [])
   return (
     <Routes>
       <Route

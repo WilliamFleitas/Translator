@@ -1,9 +1,9 @@
 {
   "name": "translator",
   "version": "2.0.0",
-  "description": "Translator App, using Deepgram transcriptions, Azure AI Translations and PyAudio to capture audio from Output Audio or Microphone",
+  "description": "Translator — Real-time transcription and translation using Deepgram and Azure AI.",
   "main": "./out/main/index.js",
-  "author": "https://github.com/WilliamFleitas",
+  "author": "William Fleitas wgiufc@hotmail.com",
   "homepage": "https://github.com/WilliamFleitas/Translator",
   "scripts": {
     "format": "prettier --write .",
@@ -16,14 +16,22 @@
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
+    "build:win": "npm run build && electron-builder --win --publish never",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "build": {
     "appId": "com.translatorElectron.app",
-    "productName": "TranslatorAPP",
+    "productName": "Translator",
     "compression": "store",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "WilliamFleitas",
+        "repo": "Translator",
+        "releaseType": "release"
+      }
+    ],
     "win": {
       "target": "nsis"
     },
@@ -34,19 +42,10 @@
       "!**/*.map"
     ],
     "extraResources": [
-      {
-        "from": ".venv",
-        "to": ".venv",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
+       {
         "from": "src/main/backend",
-        "to": "src/main/backend",
-        "filter": [
-          "**/*"
-        ]
+        "to": "backend",
+        "filter": ["**/*"]
       },
       {
         "from": "resources/icon.png",
@@ -58,7 +57,6 @@
     "@electron-toolkit/preload": "3.0.1",
     "@electron-toolkit/utils": "3.0.0",
     "@headlessui/react": "2.2.8",
-    "dotenv": "16.4.7",
     "electron-updater": "6.1.7"
   },
   "devDependencies": {
@@ -72,6 +70,7 @@
     "@types/react-dom": "18.3.0",
     "@vitejs/plugin-react": "4.3.1",
     "autoprefixer": "10.4.20",
+    "dotenv": "17.2.2",
     "electron": "31.0.2",
     "electron-builder": "24.13.3",
     "electron-vite": "2.3.0",
