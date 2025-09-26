@@ -149,7 +149,7 @@ const TranslatorTextarea = ({
         APIKey,
         APIRegion
       )
-      if (response.success) {
+      if (response.success === true) {
         setTranslationSentence(response.data.translation)
       } else {
         setTranslationError(response.error)

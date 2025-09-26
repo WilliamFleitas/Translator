@@ -140,7 +140,7 @@ const TranslatorController = ({
         azureAPIKey,
         azureAPIRegion
       )
-      if (response.success) {
+      if (response.success === true) {
         if (response.data.status !== undefined && response.data.status === 1) {
           setIsCapturingAudio(false)
         }
