@@ -37,7 +37,7 @@ export interface Api {
   stopStreaming: () => Promise<ApiResponse<{ status: string }>>
   getTranslation: (
     transcription: string,
-    audio_language: AudioLanguageType,
+    audio_language: string,
     translation_language: string,
     subsKey: string | undefined,
     region: string | undefined
