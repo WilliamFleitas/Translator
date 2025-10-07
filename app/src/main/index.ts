@@ -196,11 +196,6 @@ ipcMain.handle(
         return resolve({ success: false, error: msg })
       }
 
-      if (!isPackaged && !fs.existsSync(venvPython)) {
-        const msg = `Python executable not found at: ${venvPython}`
-        return resolve({ success: false, error: msg })
-      }
-
       if (startStreamingProcess) {
         const msg = 'Streaming process already running'
         return resolve({ success: false, error: msg })
@@ -272,6 +267,21 @@ ipcMain.handle(
         startStreamingProcess.stderr.on('data', (data) => {
           const message = data.toString().trim()
           console.log('mesage2tderr:', message)
+          if (
+            message.includes('1011') &&
+            (message.includes('timeout window') ||
+              message.includes('did not receive audio data') ||
+              message.includes('ConnectionClosed'))
+          ) {
+            const errorResponse = {
+              success: false,
+              error:
+                'Deepgram did not receive audio data or a text message within the timeout window',
+              code: 1011
+            }
+
+            return resolve(errorResponse)
+          }
         })
       }
 
