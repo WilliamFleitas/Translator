@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { TiArrowLeftThick, TiArrowRightThick } from 'react-icons/ti'
 import { MdFullscreen } from 'react-icons/md'
 import useTranslationListener from '@renderer/assets/customHooks/useTranslationListener'
 import useTranscriptionListener from '@renderer/assets/customHooks/useTranscriptionListener'
 import { PiBroomDuotone } from 'react-icons/pi'
-import { TiArrowSortedDown } from 'react-icons/ti'
-import { TiArrowSortedUp } from 'react-icons/ti'
+import {
+  TiArrowSortedDown,
+  TiArrowSortedUp,
+  TiArrowLeftThick,
+  TiArrowRightThick
+} from 'react-icons/ti'
+import { TbBackground } from 'react-icons/tb'
+
 import './TranslationOverlay.css'
 
 interface CustomTextareaPropsType {
@@ -14,13 +19,17 @@ interface CustomTextareaPropsType {
   placeholder?: string
   disabled?: boolean
   color?: string
+  tabIsEnabled: boolean
+  enableOverlayBackground: boolean
 }
 const CustomTextarea = ({
   content,
   refValue,
   disabled,
   placeholder,
-  color
+  color,
+  tabIsEnabled,
+  enableOverlayBackground
 }: CustomTextareaPropsType): React.ReactElement => {
   return (
     <textarea
@@ -28,8 +37,8 @@ const CustomTextarea = ({
       value={content}
       placeholder={placeholder}
       disabled={disabled}
-      className={`custom-textarea text-[1.6rem] resize-none shrink  overflow-auto  flex w-full h-full px-2 font-semibold outline-none focus:border-0 focus:outline-none focus:ring-0 ring-0`}
-      style={{ color: color, textShadow: '-1px 1px 8px #ffffff' }}
+      className={`custom-textarea text-[1.6rem] resize-none shrink  overflow-auto  flex text-start w-full h-full px-2 font-semibold outline-none focus:border-0 focus:outline-none focus:ring-0 ring-0 ${!tabIsEnabled && enableOverlayBackground ? 'bg-[#18171779]' : ''} rounded-md`}
+      style={{ color: color, textShadow: tabIsEnabled ? '' : '-1px 1px 8px #ffffff' }}
     />
   )
 }
@@ -42,7 +51,7 @@ const TranslationOverlay: React.FC = () => {
   const [translationColor, setTranslationColor] = useState<string>('#f6b73c')
   const [enableTranscriptionOverlay, setEnableTranscriptionOverlay] = useState<boolean>(true)
   const [enableTranslationOverlay, setEnableTranslationOverlay] = useState<boolean>(true)
-
+  const [enableOverlayBackground, setEnableOverlayBackground] = useState<boolean>(false)
   const [hoveredOverlay, setHoveredOverlay] = useState<boolean>(false)
 
   const { transcriptionSentence, transcriptionError, setTranscriptionSentence } =
@@ -58,6 +67,9 @@ const TranslationOverlay: React.FC = () => {
   const handleEnableTranslationOverlayClick = (): void => {
     if (enableTranslationOverlay && !enableTranscriptionOverlay) return
     setEnableTranslationOverlay(!enableTranslationOverlay)
+  }
+  const handleOverlayBackgroundClick = (): void => {
+    setEnableOverlayBackground(!enableOverlayBackground)
   }
   const handleClearOverlayText = (): void => {
     setTranslationSentence('')
@@ -140,6 +152,14 @@ const TranslationOverlay: React.FC = () => {
                 onClick={handleClearOverlayText}
               >
                 <PiBroomDuotone className="w-4 h-4" />
+              </button>
+              <button
+                className={`pointer-events-auto bg-primary-button hover:bg-primary-button-hover rounded-md p-1 leading-0 ${enableOverlayBackground ? 'bg-primary-button-hover' : ''}`}
+                title="Overlay Background"
+                type="button"
+                onClick={handleOverlayBackgroundClick}
+              >
+                <TbBackground className="w-4 h-4" />
               </button>
               <div className="pointer-events-auto bg-primary-button hover:bg-primary-button-hover rounded-md p-1 leading-0 ">
                 <input
@@ -241,8 +261,10 @@ const TranslationOverlay: React.FC = () => {
             color={transcriptionColor}
             disabled={true}
             refValue={textarea1Ref}
-            placeholder="Transcription here"
+            placeholder="Transcription.."
             content={transcriptionSentence}
+            tabIsEnabled={tabIsEnabled}
+            enableOverlayBackground={enableOverlayBackground}
           />
         </div>
       </div>
@@ -257,8 +279,10 @@ const TranslationOverlay: React.FC = () => {
             color={translationColor}
             disabled={true}
             refValue={textarea2Ref}
-            placeholder="Translation here"
+            placeholder="Translation.."
             content={translationSentence}
+            tabIsEnabled={tabIsEnabled}
+            enableOverlayBackground={enableOverlayBackground}
           />
         </div>
       </div>
