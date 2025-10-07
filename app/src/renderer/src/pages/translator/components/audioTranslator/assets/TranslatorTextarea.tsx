@@ -278,7 +278,7 @@ const TranslatorTextarea = ({
             placeholder="Write here.."
           />
           {transcriptionError?.length ? (
-            <strong className="bg-secondary-background/80 absolute top-0 left-0 w-full h-full flex text-center items-center justify-center grow gap-2 text-3xl border border-danger rounded-t-md">
+            <strong className="bg-secondary-background/80 absolute top-0 left-0 w-full h-full flex text-start items-center justify-center grow gap-2 text-3xl border border-danger rounded-t-md px-6 py-2">
               <span className="text-danger text-3xl">Error: </span> {transcriptionError}
             </strong>
           ) : (
@@ -294,7 +294,6 @@ const TranslatorTextarea = ({
         </div>
         <div className="mt-auto">
           <TranslatorController
-            transcriptionContent={transcriptionContent}
             isCapturingAudio={isCapturingAudio}
             transcriptionIsLoading={transcriptionIsLoading}
             selectedTranslationLanguage={selectedTranslationLanguage}
@@ -320,7 +319,7 @@ const TranslatorTextarea = ({
             disabled={true}
           />
           {APIKey.length <= 0 || APIRegion.length <= 0 || translationError?.length ? (
-            <strong className="bg-secondary-background/80 absolute top-0 left-0 w-full h-full flex text-center items-center justify-center grow gap-2 text-3xl border border-danger rounded-t-md">
+            <strong className="bg-secondary-background/80 absolute top-0 left-0 w-full h-full flex text-start items-center justify-center grow gap-2 text-3xl border border-danger rounded-t-md  px-6 py-2">
               <span className="text-danger text-3xl">Error: </span>{' '}
               {APIKey.length <= 0 || APIRegion.length <= 0
                 ? 'Missing Azure Key or Region'
