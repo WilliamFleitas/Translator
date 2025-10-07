@@ -23,6 +23,7 @@ export type ApiResponse<T> =
   | {
       success: false
       error: string
+      code?: number
     }
 
 export interface Api {
