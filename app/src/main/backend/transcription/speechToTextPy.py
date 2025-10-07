@@ -86,7 +86,7 @@ def process_transcriptions(audio_queue, deepgram_key, capture_done_event, audio_
                     continue
             dg_connection.finish()
         except Exception as e:
-            send_error_message(f"Error with Deepgram: {str(e)}")
+            send_error_message(f"{str(e)}")
 
     asyncio.run(send_audio())
 
