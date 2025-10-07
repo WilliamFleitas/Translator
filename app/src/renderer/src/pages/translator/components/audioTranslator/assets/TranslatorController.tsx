@@ -46,7 +46,6 @@ const timeDurationList = [
 ]
 
 interface TranslatorControllerPropsType {
-  transcriptionContent: string
   isCapturingAudio: boolean
   transcriptionIsLoading: boolean
   selectedTranslationLanguage: MenuOptionType
@@ -61,7 +60,6 @@ interface TranslatorControllerPropsType {
   handleSelectedTranscriptionLanguageChange: (resObj: MenuOptionType) => void
 }
 const TranslatorController = ({
-  transcriptionContent,
   isCapturingAudio,
   selectedTranslationLanguage,
   transcriptionIsLoading,
@@ -112,7 +110,7 @@ const TranslatorController = ({
       await window.api.stopStreaming()
       setIsCapturingAudio(false)
       setTranscriptionWords('')
-      setTranscriptionSentence(transcriptionContent.slice(0, transcriptionContent.length - 2) + '.')
+      setTranscriptionSentence((prev) => prev.slice(0, prev.length - 2) + '.')
     } catch (error: any) {
       toast.error(`handleStopRecording ${error.message}`, {
         isLoading: false,
@@ -124,6 +122,7 @@ const TranslatorController = ({
   }
 
   const handleStartRecording = async (): Promise<void> => {
+    let statusCode: number | undefined
     try {
       setTranscriptionIsLoading(true)
       setTranscriptionSentence('')
@@ -145,16 +144,22 @@ const TranslatorController = ({
           setIsCapturingAudio(false)
         }
       } else {
+        statusCode = response.code
         throw Error(response.error)
       }
     } catch (err: any) {
       setIsCapturingAudio(false)
       handleStopRecording()
+      if (statusCode === undefined) {
+        setTranscriptionError(err.message)
+      }
       console.log('error', err)
       toast.error(`handleStartRecording ${err.message}`, {
         isLoading: false,
         autoClose: 5000
       })
+    } finally {
+      statusCode = undefined
     }
   }
 
