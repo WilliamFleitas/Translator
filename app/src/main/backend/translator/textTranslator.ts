@@ -26,7 +26,11 @@ const textTranslator = async (
       if (detectResponse.status === 200 && detectData[0]?.language) {
         detectedLanguage = detectData[0].language
       } else {
-        throw new Error('Error detecting language')
+        if (detectResponse.status === 401 && detectResponse.statusText) {
+          throw new Error(`API Key error: ${detectResponse.statusText}`)
+        } else {
+          throw new Error(`Error: ${detectResponse.statusText ?? 'Error detecting language'}`)
+        }
       }
     }
     const translationEndpoint = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0`
