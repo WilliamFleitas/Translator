@@ -78,6 +78,12 @@ function createWindow(): void {
     if (!tray) {
       createTray()
     }
+    try {
+      autoUpdater.checkForUpdates()
+    } catch (error: any) {
+      console.error('Auto update error:', error)
+      mainWindow?.webContents.send('update_error', error)
+    }
   })
   mainWindow.webContents.on('context-menu', (_event, params) => {
     if (params.isEditable) {
@@ -364,6 +370,42 @@ ipcMain.handle(
     }
   }
 )
+
+function setupAutoUpdater(): void {
+  autoUpdater.autoDownload = false
+
+  autoUpdater.on('update-available', async (info) => {
+    const result = await dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: 'Update Available',
+      message: `Version ${info.version} is available. Do you want to download it now?`,
+      buttons: ['Download now', 'Later']
+    })
+    if (result.response === 0) autoUpdater.downloadUpdate()
+  })
+
+  autoUpdater.on('update-downloaded', async () => {
+    const result = await dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: 'Update Ready',
+      message: 'The update has been downloaded. Restart now to install?',
+      buttons: ['Restart now', 'Later']
+    })
+    if (result.response === 0) {
+      ;(app as Electron.App & { isQuiting?: boolean }).isQuiting = true
+
+      if (tray) tray.destroy()
+      BrowserWindow.getAllWindows().forEach((win) => win.destroy())
+      autoUpdater.quitAndInstall(false, true)
+    }
+  })
+
+  autoUpdater.on('error', (err) => {
+    console.error('Auto-updater error:', err)
+    mainWindow?.webContents.send('update_error', err.toString())
+  })
+}
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
 
@@ -372,47 +414,7 @@ app.whenReady().then(() => {
   })
 
   createWindow()
-
-  autoUpdater.autoDownload = false
-
-  autoUpdater.on('update-available', async (info) => {
-    const result = await dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      title: 'Update Available',
-      message: `Version ${info.version} is available. Do you want to download it now?`,
-      buttons: ['Download now', 'Later'],
-      defaultId: 0,
-      cancelId: 1
-    })
-
-    if (result.response === 0) {
-      autoUpdater.downloadUpdate()
-    }
-  })
-
-  autoUpdater.on('update-downloaded', async () => {
-    const result = await dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      title: 'Update Ready',
-      message: 'The update has been downloaded. Do you want to restart the app now to apply it?',
-      buttons: ['Restart now', 'Later'],
-      defaultId: 0,
-      cancelId: 1
-    })
-
-    if (result.response === 0) {
-      autoUpdater.quitAndInstall()
-    }
-  })
-
-  autoUpdater.on('error', (err) => {
-    console.error('Error in auto-updater:', err)
-    mainWindow?.webContents.send(
-      'update_error',
-      err == null ? 'unknown' : (err.stack || err).toString()
-    )
-  })
-  autoUpdater.checkForUpdates()
+  setupAutoUpdater()
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -432,8 +434,12 @@ ipcMain.on('window-maximize', () => {
 })
 
 ipcMain.on('window-close', (event) => {
-  event.preventDefault()
-  mainWindow?.hide()
+  if (!(app as Electron.App & { isQuiting?: boolean }).isQuiting) {
+    event.preventDefault()
+    mainWindow?.hide()
+  } else {
+    app.quit()
+  }
 })
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
