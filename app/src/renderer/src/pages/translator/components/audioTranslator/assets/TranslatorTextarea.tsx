@@ -284,13 +284,17 @@ const TranslatorTextarea = ({
           ) : (
             <></>
           )}
-          <button
-            type="button"
-            onClick={cleanText}
-            className="absolute top-1 right-1 hover:bg-primary-button-hover p-1 rounded-md"
-          >
-            <PiBroomDuotone className="w-4 h-4" />
-          </button>
+          {text1.length ? (
+            <button
+              type="button"
+              onClick={cleanText}
+              className="absolute top-1 right-1 hover:bg-primary-button-hover p-1 rounded-md"
+            >
+              <PiBroomDuotone className="w-4 h-4" />
+            </button>
+          ) : (
+            <></>
+          )}
         </div>
         <div className="mt-auto">
           <TranslatorController
@@ -366,7 +370,7 @@ const TranslatorTextarea = ({
                     checked={overlayIsShowing}
                     onChange={showOverlay}
                   />
-                  <div className="relative w-10 h-5 bg-gray-200 rounded-full peer peer-focus:ring-0 dark:bg-secondary-background peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.4 after:start-[0.5px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 border-none outline-none ring-0 hover:border-none hover:outline-none hover:ring-0 focus:border-none focus:outline-none focus:ring-0 active:border-none active:outline-none active:ring-0 "></div>
+                  <div className="relative w-10 h-5 rounded-full peer peer-focus:ring-0 bg-secondary-background peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.4 after:start-[0.5px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-gray-600 peer-checked:bg-blue-600 border-none outline-none ring-0 hover:border-none hover:outline-none hover:ring-0 focus:border-none focus:outline-none focus:ring-0 active:border-none active:outline-none active:ring-0 "></div>
                 </label>
               </div>
             </section>
