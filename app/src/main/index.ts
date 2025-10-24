@@ -3,7 +3,7 @@ import { autoUpdater } from 'electron-updater'
 import path, { join } from 'path'
 import dotenv from 'dotenv'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { spawn, ChildProcess, exec } from 'child_process'
+import { spawn, ChildProcess, execSync } from 'child_process'
 import fs from 'fs'
 import { ApiResponse, DeviceType, DurationTimeType, StartStreamingType } from '../preload'
 import textTranslator from './backend/translator/textTranslator'
@@ -14,6 +14,8 @@ let tray: Tray | null = null
 let mainWindow: BrowserWindow | null = null
 let translationOverlayWindow: BrowserWindow | null = null
 const isPackaged = app.isPackaged
+
+const pythonProcessPids: number[] = []
 
 const getScriptPath = (_packagePath: string[], devPath: string): any => {
   return isPackaged
@@ -47,6 +49,7 @@ function createTray(): void {
           translationOverlayWindow.destroy()
           translationOverlayWindow = null
         }
+        ipcMain.emit('stop-streaming')
         app.quit()
       }
     }
@@ -179,6 +182,55 @@ ipcMain.on('toggle-overlay', (_event, enableOverlay: boolean) => {
 
 let startStreamingProcess: ChildProcess | null = null
 let stoppedByUser: boolean = false
+function killProcessTree(pid: number): void {
+  if (!pid || isNaN(pid)) {
+    console.warn('Invalid PID:', pid)
+    return
+  }
+
+  try {
+    if (process.platform === 'win32') {
+      try {
+        execSync(`taskkill /pid ${pid} /T /F`, {
+          timeout: 5000,
+          stdio: 'pipe'
+        })
+        console.log(`Successfully killed process tree for PID ${pid}`)
+      } catch (error: any) {
+        try {
+          execSync(`taskkill /pid ${pid} /F`, {
+            timeout: 5000,
+            stdio: 'pipe'
+          })
+          console.log(`Killed main process for PID ${pid}`)
+        } catch (err: any) {
+          console.error(`Failed to kill process for PID ${pid}:`, err.message)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Unexpected error in killProcessTree:', error)
+  }
+}
+
+function killAllPythonProcesses(): void {
+  console.log('Killing all registered Python processes...')
+
+  if (startStreamingProcess && !startStreamingProcess.killed) {
+    const pid = startStreamingProcess.pid
+    if (pid) {
+      killProcessTree(pid)
+    }
+  }
+
+  pythonProcessPids.forEach((pid) => {
+    if (pid) {
+      killProcessTree(pid)
+    }
+  })
+  forceKillPython()
+}
+
 ipcMain.handle(
   'start-streaming',
   (
@@ -209,8 +261,24 @@ ipcMain.handle(
 
       const safeDeepgramKey = deepgram_key ?? ''
       startStreamingProcess = isPackaged
-        ? spawn(scriptPath, [device, durationTime, safeDeepgramKey, audio_language])
-        : spawn(venvPython, ['-u', scriptPath, device, durationTime, deepgram_key, audio_language])
+        ? spawn(scriptPath, [device, durationTime, safeDeepgramKey, audio_language], {
+            detached: false,
+            stdio: ['pipe', 'pipe', 'pipe']
+          })
+        : spawn(
+            venvPython,
+            ['-u', scriptPath, device, durationTime, deepgram_key, audio_language],
+            {
+              detached: false,
+              stdio: ['pipe', 'pipe', 'pipe']
+            }
+          )
+
+      if (startStreamingProcess.pid) {
+        pythonProcessPids.push(startStreamingProcess.pid)
+        console.log(`Registered Python process with PID: ${startStreamingProcess.pid}`)
+      }
+
       let outputData: ApiResponse<StartStreamingType> | null = null
       let translationError: boolean = false
 
@@ -318,27 +386,19 @@ ipcMain.handle(
 )
 
 ipcMain.handle('stop-streaming', async () => {
+  console.log('Stopping streaming...')
   stoppedByUser = true
-  if (startStreamingProcess !== null) {
+  if (startStreamingProcess !== null && !startStreamingProcess.killed) {
     try {
-      if (!startStreamingProcess.killed) {
-        if (isPackaged) {
-          exec(`taskkill /pid ${startStreamingProcess.pid} /T /F`, (err) => {
-            if (err) {
-              console.error('Error killing process:', err)
-              throw Error('Error killing process:', err)
-            }
-          })
-        } else {
-          startStreamingProcess.kill()
-        }
-        startStreamingProcess = null
-
-        return { success: true, data: { status: 'Capture finished' } }
-      } else {
-        return { success: false, data: { status: 'The process was already stopped.' } }
+      const pid = startStreamingProcess.pid
+      if (pid) {
+        killProcessTree(pid)
       }
+      startStreamingProcess = null
+
+      return { success: true, data: { status: 'Capture finished' } }
     } catch (error) {
+      console.error('Error in stop-streaming:', error)
       return { success: false, data: { status: 'Error stopping the process', error } }
     }
   } else {
@@ -406,6 +466,25 @@ function setupAutoUpdater(): void {
   })
 }
 
+function forceKillPython(): void {
+  console.log('Force killing all Python processes...')
+  if (process.platform === 'win32') {
+    try {
+      execSync('taskkill /IM python.exe /F /T', { timeout: 5000, stdio: 'pipe' })
+      console.log('Killed all python.exe processes')
+    } catch (error: any) {
+      console.log(error)
+    }
+
+    try {
+      execSync('taskkill /IM speechToText.exe /F /T', { timeout: 5000, stdio: 'pipe' })
+      console.log('Killed all speechToText.exe processes')
+    } catch (error: any) {
+      console.log(error)
+    }
+  }
+}
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
 
@@ -443,10 +522,44 @@ ipcMain.on('window-close', (event) => {
 })
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    killAllPythonProcesses()
     app.quit()
   }
 })
 
+app.on('quit', () => {
+  console.log('App quitting - cleaning up processes...')
+  if (process.platform !== 'darwin') {
+    killAllPythonProcesses()
+    app.quit()
+  }
+})
+
+process.on('exit', () => {
+  killAllPythonProcesses()
+})
+
 app.on('before-quit', () => {
+  console.log('Before quit - cleanup...')
+  killAllPythonProcesses()
   tray?.destroy()
 })
+
+app.on('will-quit', () => {
+  console.log('Will quit - final cleanup...')
+  killAllPythonProcesses()
+})
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error)
+  killAllPythonProcesses()
+})
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason)
+  killAllPythonProcesses()
+})
+
+process.on('exit', killAllPythonProcesses)
+process.on('SIGINT', killAllPythonProcesses)
+process.on('SIGTERM', killAllPythonProcesses)

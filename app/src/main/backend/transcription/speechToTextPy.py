@@ -123,10 +123,10 @@ def recognize_stream(source_type, durationTime, deepgram_key, audio_language):
         audio_queue = queue.Queue()
         capture_done_event = threading.Event()
 
-        capture_thread = threading.Thread(target=capture_audio, args=(audio_queue, stream, duration, start_time, capture_done_event))
+        capture_thread = threading.Thread(target=capture_audio, args=(audio_queue, stream, duration, start_time, capture_done_event), daemon=False)
         capture_thread.start()
 
-        transcription_thread = threading.Thread(target=process_transcriptions, args=(audio_queue, deepgram_key, capture_done_event, audio_language, CHANNELS, RATE))
+        transcription_thread = threading.Thread(target=process_transcriptions, args=(audio_queue, deepgram_key, capture_done_event, audio_language, CHANNELS, RATE), daemon=False)
         transcription_thread.start()
 
         capture_thread.join()
