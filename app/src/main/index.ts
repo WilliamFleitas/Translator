@@ -281,12 +281,24 @@ ipcMain.handle(
 
       let outputData: ApiResponse<StartStreamingType> | null = null
       let translationError: boolean = false
-
+      function isValidJSON(str: string): boolean {
+        try {
+          JSON.parse(str)
+          return true
+        } catch {
+          return false
+        }
+      }
       if (startStreamingProcess && startStreamingProcess.stdout && startStreamingProcess.stderr) {
         startStreamingProcess.stdout.on('data', async (data) => {
           const receivedData = data.toString().trim()
           try {
+            if (!isValidJSON(receivedData)) {
+              console.warn('Ignoring invalid or partial JSON from speechToText.exe:', receivedData)
+              return
+            }
             const response: ApiResponse<StartStreamingType> = JSON.parse(receivedData)
+
             if (response.success) {
               if (response.data.status !== undefined) {
                 if (response.data.status === 0 || response.data.status === 2) {
